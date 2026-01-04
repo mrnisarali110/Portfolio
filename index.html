@@ -34,6 +34,12 @@
             color: var(--text-primary);
             font-family: 'Space Grotesk', sans-serif;
             overflow-x: hidden;
+            /* Hide scrollbar during loading */
+            overflow: hidden; 
+        }
+        
+        body.loaded {
+            overflow: auto;
             background-image: 
                 radial-gradient(circle at 10% 20%, rgba(14, 165, 233, 0.15) 0%, transparent 20%),
                 radial-gradient(circle at 90% 80%, rgba(14, 165, 233, 0.1) 0%, transparent 20%);
@@ -43,6 +49,62 @@
         ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: var(--bg-color); }
         ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 5px; }
+
+        /* --- PRELOADER (The Terminal) --- */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.8s ease-out, visibility 0.8s;
+        }
+
+        #preloader.fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .terminal-window {
+            background: var(--terminal-bg);
+            border-radius: 10px;
+            padding: 20px;
+            width: 90%;
+            max-width: 600px;
+            border: 1px solid #333;
+            box-shadow: 0 0 50px rgba(14, 165, 233, 0.2);
+            text-align: left;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        .terminal-header {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .red { background: #ff5f56; }
+        .yellow { background: #ffbd2e; }
+        .green { background: #27c93f; }
+
+        .terminal-body {
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .cmd-line { color: var(--accent); }
+        .output-line { color: var(--text-secondary); display: block; }
+        .success { color: #27c93f; }
 
         /* --- Container --- */
         .container {
@@ -89,33 +151,6 @@
             flex-direction: column;
             padding-top: 80px;
         }
-
-        .terminal-window {
-            background: var(--terminal-bg);
-            border-radius: 10px;
-            padding: 20px;
-            width: 100%;
-            max-width: 600px;
-            margin-bottom: 30px;
-            border: 1px solid #333;
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
-            text-align: left;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9rem;
-        }
-
-        .terminal-header {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-        .dot { width: 12px; height: 12px; border-radius: 50%; }
-        .red { background: #ff5f56; }
-        .yellow { background: #ffbd2e; }
-        .green { background: #27c93f; }
-
-        .cmd-line { color: var(--accent); margin-bottom: 5px; }
-        .output { color: var(--text-secondary); margin-bottom: 15px; display: block; }
 
         .profile-container {
             position: relative;
@@ -185,23 +220,28 @@
         }
         .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
 
-        /* --- Infinite Skills Marquee --- */
-        .marquee-container {
+        /* --- Infinite Skills Marquee (Dual Lane) --- */
+        .marquee-section {
             width: 100%;
             overflow: hidden;
             background: rgba(0,0,0,0.3);
-            padding: 20px 0;
+            padding: 40px 0;
             margin: 80px 0;
             border-top: 1px solid var(--glass-border);
             border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
-        .marquee-content {
+        .marquee-track {
             display: flex;
             gap: 50px;
-            animation: scroll 20s linear infinite;
             width: max-content;
         }
+
+        .scroll-left { animation: scroll 30s linear infinite; }
+        .scroll-right { animation: scroll-reverse 30s linear infinite; }
 
         .skill-item {
             display: flex;
@@ -210,12 +250,29 @@
             color: var(--text-secondary);
             font-weight: 600;
             font-size: 1.2rem;
+            white-space: nowrap;
+            background: rgba(255,255,255,0.03);
+            padding: 8px 20px;
+            border-radius: 50px;
+            border: 1px solid rgba(255,255,255,0.05);
         }
+        
+        .soft-skill {
+            color: #fff;
+            border-color: var(--accent);
+            background: rgba(14, 165, 233, 0.1);
+        }
+
         .skill-item i { color: var(--accent); }
 
         @keyframes scroll {
             0% { transform: translateX(0); }
             100% { transform: translateX(-50%); }
+        }
+        
+        @keyframes scroll-reverse {
+            0% { transform: translateX(-50%); }
+            100% { transform: translateX(0); }
         }
 
         /* --- Timeline (Resume) --- */
@@ -410,12 +467,24 @@
             .timeline-card.right { left: 0; }
             .timeline-badge { left: 21px; }
             .right .timeline-badge { left: 21px; }
-            .marquee-content { gap: 30px; }
+            .marquee-track { gap: 30px; }
             .profile-img { width: 120px; height: 120px; }
         }
     </style>
 </head>
 <body>
+
+    <div id="preloader">
+        <div class="terminal-window">
+            <div class="terminal-header">
+                <div class="dot red"></div>
+                <div class="dot yellow"></div>
+                <div class="dot green"></div>
+            </div>
+            <div class="terminal-body" id="terminal-body">
+                </div>
+        </div>
+    </div>
 
     <div class="container">
         <nav>
@@ -429,20 +498,6 @@
 
         <header>
             
-            <div class="terminal-window" data-aos="fade-down">
-                <div class="terminal-header">
-                    <div class="dot red"></div>
-                    <div class="dot yellow"></div>
-                    <div class="dot green"></div>
-                </div>
-                <div class="terminal-body">
-                    <div class="cmd-line">nisar@portfolio:~$ init --role="Solutions Engineer"</div>
-                    <span class="output">Loading dependencies... [OK]</span>
-                    <span class="output">Fetching projects from GitHub... [OK]</span>
-                    <span class="output" id="typewriter"></span>
-                </div>
-            </div>
-
             <div class="profile-container" data-aos="zoom-in" data-aos-delay="100">
                 <img src="https://raw.githubusercontent.com/mrnisarali110/Portfolio/main/profile.png" alt="Nisar Ali" class="profile-img">
             </div>
@@ -457,8 +512,9 @@
         </header>
     </div>
 
-    <div class="marquee-container">
-        <div class="marquee-content">
+    <div class="marquee-section">
+        
+        <div class="marquee-track scroll-left">
             <div class="skill-item"><i class="fab fa-react"></i> React.js</div>
             <div class="skill-item"><i class="fab fa-python"></i> Python</div>
             <div class="skill-item"><i class="fas fa-project-diagram"></i> n8n Automation</div>
@@ -473,6 +529,22 @@
             <div class="skill-item"><i class="fab fa-node-js"></i> Node.js</div>
             <div class="skill-item"><i class="fab fa-figma"></i> Figma</div>
         </div>
+
+        <div class="marquee-track scroll-right">
+            <div class="skill-item soft-skill"><i class="fas fa-brain"></i> Problem Solving</div>
+            <div class="skill-item soft-skill"><i class="fas fa-bolt"></i> Fast Learner</div>
+            <div class="skill-item soft-skill"><i class="fas fa-users"></i> Client Coordination</div>
+            <div class="skill-item soft-skill"><i class="fas fa-tasks"></i> Project Management</div>
+            <div class="skill-item soft-skill"><i class="fas fa-comments"></i> Technical Communication</div>
+            <div class="skill-item soft-skill"><i class="fas fa-search-dollar"></i> Strategic Planning</div>
+            <div class="skill-item soft-skill"><i class="fas fa-sync"></i> Agile Adaptation</div>
+            <div class="skill-item soft-skill"><i class="fas fa-brain"></i> Problem Solving</div>
+            <div class="skill-item soft-skill"><i class="fas fa-bolt"></i> Fast Learner</div>
+            <div class="skill-item soft-skill"><i class="fas fa-users"></i> Client Coordination</div>
+            <div class="skill-item soft-skill"><i class="fas fa-tasks"></i> Project Management</div>
+            <div class="skill-item soft-skill"><i class="fas fa-comments"></i> Technical Communication</div>
+        </div>
+
     </div>
 
     <div class="container">
@@ -665,13 +737,13 @@
                     <a href="https://github.com/mrnisarali110" target="_blank" class="contact-card github-card" data-aos="fade-up" data-aos-delay="100">
                         <i class="fab fa-github contact-icon"></i>
                         <div class="contact-title">Explore My Code</div>
-                        <div class="contact-sub">Check repositories & contributions</div>
+                        <div class="contact-sub">Check repositories</div>
                     </a>
 
                     <a href="https://www.linkedin.com/in/nisarali110/" target="_blank" class="contact-card linkedin-card" data-aos="fade-up" data-aos-delay="200">
                         <i class="fab fa-linkedin contact-icon"></i>
                         <div class="contact-title">Connect Professionally</div>
-                        <div class="contact-sub">Read my articles & posts</div>
+                        
                     </a>
 
                     <a href="mailto:mrnisarali110@gmail.com" class="contact-card email-card" data-aos="fade-up" data-aos-delay="300">
@@ -704,17 +776,49 @@
             offset: 100
         });
 
-        // Simple Typing Effect for Terminal
-        const text = "System Ready. User: Nisar Ali (Solutions Engineer)";
-        let index = 0;
-        function typeWriter() {
-            if (index < text.length) {
-                document.getElementById("typewriter").innerHTML += text.charAt(index);
-                index++;
-                setTimeout(typeWriter, 50);
+        // PRELOADER LOGIC
+        const terminalBody = document.getElementById('terminal-body');
+        const preloader = document.getElementById('preloader');
+        
+        // The lines of code to type
+        const commands = [
+            { text: "nisar@portfolio:~$ init --role='Solutions Engineer'", class: "cmd-line", delay: 100 },
+            { text: "Loading core dependencies...", class: "output-line", delay: 600 },
+            { text: "Connecting to GitHub API... [200 OK]", class: "output-line", delay: 1200 },
+            { text: "Verifying tech stack (Python, n8n, React)...", class: "output-line", delay: 1800 },
+            { text: "Optimizing for soft skills (Problem Solving)...", class: "output-line", delay: 2400 },
+            { text: "Access Granted. Welcome, Recruiter.", class: "success", delay: 3200 }
+        ];
+
+        let i = 0;
+
+        function addLine() {
+            if (i < commands.length) {
+                const line = document.createElement('div');
+                line.className = commands[i].class;
+                line.textContent = commands[i].text;
+                terminalBody.appendChild(line);
+                
+                // Auto scroll to bottom
+                terminalBody.scrollTop = terminalBody.scrollHeight;
+
+                const nextDelay = (i + 1 < commands.length) ? (commands[i+1].delay - commands[i].delay) : 1000;
+                i++;
+                setTimeout(addLine, nextDelay);
+            } else {
+                // Animation finished, hide preloader
+                setTimeout(() => {
+                    preloader.classList.add('fade-out');
+                    document.body.classList.add('loaded'); // Re-enable scrolling
+                    // Trigger AOS animations after loader is gone
+                    setTimeout(() => AOS.refresh(), 500); 
+                }, 800);
             }
         }
-        setTimeout(typeWriter, 1000);
+
+        // Start the sequence
+        setTimeout(addLine, 100);
+
     </script>
 </body>
 </html>
