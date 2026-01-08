@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://mrnisarali110.github.io/Portfolio-Resume/sitemap.xml
